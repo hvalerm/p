@@ -2,11 +2,11 @@
 // Conexión a MySQL en Aiven (SSL requerido)
 // Zona horaria del negocio: se usa para comparar la fecha de licencia_expira
 date_default_timezone_set('America/Guayaquil');
-define('DB_HOST', 'mysql-25019e99-opendoors.j.aivencloud.com');
-define('DB_PORT', 13195);
-define('DB_NAME', 'opendoors_v2');
-define('DB_USER', 'avnadmin');
-
+define('DB_HOST', getenv('DB_HOST'));
+define('DB_PORT', getenv('DB_PORT'));
+define('DB_NAME', getenv('DB_NAME'));
+define('DB_USER', getenv('DB_USER'));
+define('DB_PASS', getenv('DB_PASS'));
 define('DB_CHARSET', 'utf8mb4');
 // Opcional: guarda el "CA certificate" de Aiven en util/ca.pem para verificar el servidor
 define('DB_SSL_CA', __DIR__ . '/ca.pem');

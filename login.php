@@ -69,7 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Iniciar sesión | Administrar Alojamiento</title>
+    <title>Iniciar sesión | OpenDoors</title>
+    <link rel="icon" type="image/png" href="img/OpenDoors.png">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -143,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="logo" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12h-6v-7H9v7H3z"/></svg>
         </div>
-        <h1>Administrar Alojamiento</h1>
+        <h1>OpenDoors</h1>
         <p class="sub">Inicia sesión para continuar</p>
 
         <?php if ($error): ?>
@@ -163,7 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <button type="submit" class="submit">Ingresar</button>
         </form>
-        <footer>&copy; <?= date('Y') ?> Administrar Alojamiento</footer>
+        <footer>&copy; <?= date('Y') ?> OpenDoors</footer>
     </main>
 </body>
 </html>

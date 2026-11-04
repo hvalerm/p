@@ -34,7 +34,7 @@ $menu = [
         ['Crear', null, 'Accesos/SeleccionarLocalAcceso.php'], ['Listar', null, 'Accesos/listarAccesos.php'], ['Revocar', null, 'Accesos/busquedaAccesoRevocar.php'],
     ]],
     ['Unidades de control', 'M6 6h12v12H6zM9 9v6h6V9zM7 3h2v3H7zm4 0h2v3h-2zm4 0h2v3h-2zM7 18h2v3H7zm4 0h2v3h-2zm4 0h2v3h-2z', [
-        ['Ver estado'], ['Ver actividad'], ['Reiniciar'],
+        ['Ver estado'], ['Ver actividad'],
     ]],
 ];
 
@@ -98,6 +98,7 @@ if (!isset($validas[$actual])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Modo Anfitrión | Administrar Alojamiento</title>
+    <link rel="icon" type="image/png" href="../img/OpenDoors.png">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; background: #f2f5f7; color: #1b2a35; min-height: 100vh; }

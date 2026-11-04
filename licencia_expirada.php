@@ -20,6 +20,7 @@ $mensajeWa = rawurlencode('Hola, la licencia de ' . $info['empresa'] . ' expiró
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Licencia expirada | Administrar Alojamiento</title>
+    <link rel="icon" type="image/png" href="img/OpenDoors.png">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); padding: 20px; }

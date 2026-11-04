@@ -114,6 +114,7 @@ $valHasta = $hasta ?? ($acceso ? date('Y-m-d\TH:i', strtotime($acceso['activo_ha
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Acceso | Administrar Alojamiento</title>
+    <link rel="icon" type="image/png" href="../../img/OpenDoors.png">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; background: <?= $embed ? '#fff' : '#f2f5f7' ?>; color: #1b2a35; padding: 24px; }

@@ -64,6 +64,7 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Local seleccionado | Administrar Alojamiento</title>
+    <link rel="icon" type="image/png" href="../../img/OpenDoors.png">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; background: <?= $embed ? '#fff' : '#f2f5f7' ?>; color: #1b2a35; padding: 24px; }
@@ -73,7 +74,7 @@ try {
         dt { color: #6b7a86; }
         .acciones { display: flex; gap: 12px; flex-wrap: wrap; }
         .acciones form { margin: 0; }
-        .btn { border: none; border-radius: 8px; padding: 12px 22px; font: inherit; font-weight: 600; color: #fff; background: #2c5364; cursor: pointer; }
+        .btn { display: inline-block; text-decoration: none; border: none; border-radius: 8px; padding: 12px 22px; font: inherit; font-weight: 600; color: #fff; background: #2c5364; cursor: pointer; }
         .btn:hover { background: #203a43; }
         .btn.secundario { background: #3a8fb7; }
         .btn.peligro { background: #b3261e; }
@@ -110,7 +111,7 @@ try {
                     <input type="hidden" name="accion" value="anular_apertura">
                     <button type="submit" class="btn peligro">Anular apertura de puerta</button>
                 </form>
-                <button type="button" class="btn secundario">Crear Acceso</button>
+                <a class="btn secundario" href="../Accesos/CrearAccesoLocal.php?id=<?= (int) $local['id_local'] ?><?= $embed ? '&amp;embed=1' : '' ?>">Crear Acceso</a>
             </div>
         <?php endif; ?>
     </section>

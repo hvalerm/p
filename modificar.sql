@@ -9,6 +9,7 @@ DROP TRIGGER IF EXISTS trg_after_update_id_local_microcontrolador;
 DROP TRIGGER IF EXISTS trg_after_update_ultimaConsulta_microcontrolador;
 DROP TRIGGER IF EXISTS trg_after_update_ultimaEjecucion_microcontrolador;
 DROP TRIGGER IF EXISTS trg_after_update_ultimaApertura_microcontrolador;
+DROP TRIGGER IF EXISTS trg_after_update_cantidadAperturas_microcontrolador;
 DROP TRIGGER IF EXISTS trg_after_update_habilitado_microcontrolador;
 DROP TRIGGER IF EXISTS trg_before_update_no_permitida_id_microcontrolador_micros;
 DROP TRIGGER IF EXISTS trg_after_update_no_permitida_id_microcontrolador_micros;
@@ -27,6 +28,7 @@ CREATE TABLE microcontroladores (
   id_empresa int NOT NULL,
   ultimaConsulta datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   ultimaApertura datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cantidadAperturas int NOT NULL DEFAULT '0',
   habilitado tinyint(1) NOT NULL DEFAULT '1',
   KEY id_local (id_local,id_empresa),
   FOREIGN KEY (id_local, id_empresa) REFERENCES locales (id_local, id_empresa)
@@ -180,6 +182,26 @@ BEGIN
                 OLD.ultimaApertura,
                 ' | Nuevo: ',
                 NEW.ultimaApertura
+            )
+        );
+    END IF;
+END$$
+
+CREATE TRIGGER trg_after_update_cantidadAperturas_microcontrolador
+AFTER UPDATE ON microcontroladores
+FOR EACH ROW
+BEGIN
+    IF OLD.cantidadAperturas <> NEW.cantidadAperturas THEN
+        INSERT INTO logs_microcontroladores (id_microcontrolador, id_local, id_empresa, descripcion_log_microcontrolador)
+        VALUES (
+            NEW.id_microcontrolador,
+            NEW.id_local,
+            NEW.id_empresa,
+            CONCAT(
+                '[UPDATE] Modificación en cantidadAperturas. Anterior: ',
+                OLD.cantidadAperturas,
+                ' | Nuevo: ',
+                NEW.cantidadAperturas
             )
         );
     END IF;

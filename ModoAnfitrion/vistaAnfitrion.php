@@ -37,7 +37,7 @@ $menu = [
         ['Crear', null, 'Accesos/SeleccionarLocalAcceso.php'], ['Listar', null, 'Accesos/listarAccesos.php'], ['Revocar', null, 'Accesos/busquedaAccesoRevocar.php'],
     ]],
     ['Unidades de control', 'M6 6h12v12H6zM9 9v6h6V9zM7 3h2v3H7zm4 0h2v3h-2zm4 0h2v3h-2zM7 18h2v3H7zm4 0h2v3h-2zm4 0h2v3h-2z', [
-        ['Ver estado', null, 'Microcontroladores/verEstado.php'], ['Ver actividad'],
+        ['Ver estado', null, 'Microcontroladores/verEstado.php'], ['Ver actividad', null, 'Microcontroladores/verActividad.php'],
     ]],
 ];
 

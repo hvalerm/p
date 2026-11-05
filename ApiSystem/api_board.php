@@ -61,6 +61,8 @@ try {
         ->execute([$idMicrocontrolador]);
 
     if ($accionar === 1) {
+        $pdo->prepare('UPDATE microcontroladores SET cantidadAperturas = cantidadAperturas + 1 WHERE id_microcontrolador = ?')
+            ->execute([$idMicrocontrolador]);
         $pdo->prepare('UPDATE locales SET accionar = 0 WHERE id_local = ? AND id_empresa = ?')
             ->execute([$micro['id_local'], $micro['id_empresa']]);
     }

@@ -1,108 +1,53 @@
 <?php
-// Envío de correo por SMTP sin librerías externas.
-// Datos SMTP de Gmail definidos directamente en enviarCorreo().
+// Envío de correo con la API HTTP de Resend (Render bloquea el puerto SMTP 587).
+// Variables de entorno: RESEND_API_KEY (obligatoria) y RESEND_FROM (opcional).
+// Sin RESEND_FROM se usa onboarding@resend.dev, que solo entrega al correo dueño de la cuenta de Resend;
+// para enviar a cualquier destinatario hay que verificar un dominio en Resend y usar un remitente de ese dominio.
 
 function smtpConfigurado(): bool
 {
-    return true;
-}
-
-function smtpLeer($fp): array
-{
-    $codigo = 0;
-    $texto = '';
-    while (($linea = fgets($fp, 1024)) !== false) {
-        $texto .= $linea;
-        $codigo = (int) substr($linea, 0, 3);
-        if (strlen($linea) < 4 || $linea[3] === ' ') {
-            break;
-        }
-    }
-    return [$codigo, $texto];
-}
-
-function smtpComando($fp, string $cmd, array $esperados): bool
-{
-    global $smtpUltimaRespuesta;
-    if ($cmd !== '') {
-        fwrite($fp, $cmd . "\r\n");
-    }
-    [$codigo, $texto] = smtpLeer($fp);
-    $smtpUltimaRespuesta = trim($texto);
-    return in_array($codigo, $esperados, true);
+    return (string) getenv('RESEND_API_KEY') !== '' && function_exists('curl_init');
 }
 
 function enviarCorreo(string $para, string $asunto, string $texto): bool
 {
-    $host = 'smtp.gmail.com';
-    $usuario = 'opendoors.americalatina@gmail.com';
-    // Gmail muestra la contraseña de aplicación en grupos con espacios; no forman parte de la clave
-    $clave = preg_replace('/\s+/', '', getenv('SMTP_PASS'));
-    $desde = $usuario;
-    $seguridad = 'tls';
-    $puerto = 587;
+    $apiKey = (string) getenv('RESEND_API_KEY');
+    $desde = (string) (getenv('RESEND_FROM') ?: 'OpenDoors <onboarding@resend.dev>');
 
     // Evita inyección de cabeceras
-    if (!filter_var($para, FILTER_VALIDATE_EMAIL) || !filter_var($desde, FILTER_VALIDATE_EMAIL) || $host === '') {
+    if (!filter_var($para, FILTER_VALIDATE_EMAIL) || $apiKey === '' || preg_match('/[\r\n]/', $asunto . $desde)) {
+        error_log('Resend: falta RESEND_API_KEY o el destinatario no es válido.');
         return false;
     }
 
-    $fp = @stream_socket_client(($seguridad === 'ssl' ? 'ssl://' : 'tcp://') . $host . ':' . $puerto, $errno, $errstr, 10);
-    if (!$fp) {
-        error_log('SMTP: no se pudo conectar: ' . $errstr);
+    $ch = curl_init('https://api.resend.com/emails');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_HTTPHEADER     => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $apiKey,
+        ],
+        CURLOPT_POSTFIELDS     => json_encode(
+            ['from' => $desde, 'to' => [$para], 'subject' => $asunto, 'text' => $texto],
+            JSON_UNESCAPED_UNICODE
+        ),
+        CURLOPT_CONNECTTIMEOUT => 10,
+        CURLOPT_TIMEOUT        => 15,
+    ]);
+
+    $respuesta = curl_exec($ch);
+    $codigoHttp = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $errorCurl = curl_error($ch);
+    curl_close($ch);
+
+    if ($respuesta === false) {
+        error_log('Resend: error de conexión: ' . $errorCurl);
         return false;
     }
-    stream_set_timeout($fp, 15);
-
-    try {
-        if (!smtpComando($fp, '', [220])) {
-            throw new RuntimeException('saludo inicial');
-        }
-        if (!smtpComando($fp, 'EHLO opendoors', [250])) {
-            throw new RuntimeException('EHLO');
-        }
-        if ($seguridad === 'tls') {
-            if (!smtpComando($fp, 'STARTTLS', [220]) || !stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
-                throw new RuntimeException('STARTTLS');
-            }
-            if (!smtpComando($fp, 'EHLO opendoors', [250])) {
-                throw new RuntimeException('EHLO tras STARTTLS');
-            }
-        }
-        if ($usuario !== '') {
-            if (!smtpComando($fp, 'AUTH LOGIN', [334])
-                || !smtpComando($fp, base64_encode($usuario), [334])
-                || !smtpComando($fp, base64_encode($clave), [235])) {
-                throw new RuntimeException('autenticación');
-            }
-        }
-        if (!smtpComando($fp, 'MAIL FROM:<' . $desde . '>', [250])
-            || !smtpComando($fp, 'RCPT TO:<' . $para . '>', [250, 251])
-            || !smtpComando($fp, 'DATA', [354])) {
-            throw new RuntimeException('remitente/destinatario');
-        }
-
-        $cabeceras = [
-            'From: OpenDoors <' . $desde . '>',
-            'To: <' . $para . '>',
-            'Subject: =?UTF-8?B?' . base64_encode(str_replace(["\r", "\n"], ' ', $asunto)) . '?=',
-            'Date: ' . date('r'),
-            'MIME-Version: 1.0',
-            'Content-Type: text/plain; charset=UTF-8',
-            'Content-Transfer-Encoding: base64',
-        ];
-        $mensaje = implode("\r\n", $cabeceras) . "\r\n\r\n" . chunk_split(base64_encode($texto), 76, "\r\n");
-        // El cuerpo va en base64, por lo que nunca hay una línea que sea solo "."
-        if (!smtpComando($fp, rtrim($mensaje, "\r\n") . "\r\n.", [250])) {
-            throw new RuntimeException('envío del mensaje');
-        }
-        smtpComando($fp, 'QUIT', [221]);
-        return true;
-    } catch (RuntimeException $e) {
-        global $smtpUltimaRespuesta;
-        error_log('SMTP: falló en ' . $e->getMessage() . ' (respuesta del servidor: ' . ($smtpUltimaRespuesta ?? 'ninguna') . ')');
+    if ($codigoHttp !== 200 && $codigoHttp !== 201) {
+        error_log('Resend: HTTP ' . $codigoHttp . ' - ' . $respuesta);
         return false;
-    } finally {
-        fclose($fp);
     }
+    return true;
 }

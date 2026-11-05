@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!filter_var($correo, FILTER_VALIDATE_EMAIL) || strlen($correo) > 50) {
         $error = 'Ingresa un correo válido.';
     } elseif (!smtpConfigurado()) {
-        error_log('Recuperar contraseña: SMTP_HOST / SMTP_USER no están configurados.');
+        error_log('Recuperar contraseña: falta RESEND_API_KEY o la extensión curl de PHP.');
         $error = 'El envío de correos no está disponible por ahora. Contacta al administrador.';
     } elseif (time() - (int) ($_SESSION['rec_ultimo_envio'] ?? 0) < REC_ESPERA_SEGUNDOS) {
         $error = 'Espera un momento antes de solicitar otro código.';

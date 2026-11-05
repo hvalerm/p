@@ -2,8 +2,6 @@
 // Envío de correo por SMTP sin librerías externas.
 // Datos SMTP de Gmail definidos directamente en enviarCorreo().
 
-const SMTP_CLAVE_PENDIENTE = 'PEGA_AQUI_LA_CONTRASENA_DE_APLICACION';
-
 function smtpConfigurado(): bool
 {
     return true;
@@ -39,7 +37,7 @@ function enviarCorreo(string $para, string $asunto, string $texto): bool
     $host = 'smtp.gmail.com';
     $usuario = 'opendoors.americalatina@gmail.com';
     // Gmail muestra la contraseña de aplicación en grupos con espacios; no forman parte de la clave
-    $clave = preg_replace('/\s+/', '', "faroorzagbtqgxsj");
+    $clave = preg_replace('/\s+/', '', getenv('SMTP_PASS'));
     $desde = $usuario;
     $seguridad = 'tls';
     $puerto = 587;

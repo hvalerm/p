@@ -1,11 +1,12 @@
 <?php
 // Envío de correo por SMTP sin librerías externas.
-// Variables de entorno: SMTP_HOST, SMTP_PORT (587 por defecto), SMTP_USER, SMTP_PASS,
-// SMTP_FROM (por defecto SMTP_USER), SMTP_SECURE = tls (STARTTLS, por defecto) | ssl | none
+// Datos SMTP de Gmail definidos directamente en enviarCorreo().
+
+const SMTP_CLAVE_PENDIENTE = 'PEGA_AQUI_LA_CONTRASENA_DE_APLICACION';
 
 function smtpConfigurado(): bool
 {
-    return (string) getenv('SMTP_HOST') !== '' && (string) getenv('SMTP_USER') !== '';
+    return true;
 }
 
 function smtpLeer($fp): array
@@ -35,13 +36,13 @@ function smtpComando($fp, string $cmd, array $esperados): bool
 
 function enviarCorreo(string $para, string $asunto, string $texto): bool
 {
-    $host = (string) getenv('SMTP_HOST');
-    $usuario = (string) getenv('SMTP_USER');
+    $host = 'smtp.gmail.com';
+    $usuario = 'opendoors.americalatina@gmail.com';
     // Gmail muestra la contraseña de aplicación en grupos con espacios; no forman parte de la clave
-    $clave = preg_replace('/\s+/', '', (string) getenv('SMTP_PASS'));
-    $desde = (string) (getenv('SMTP_FROM') ?: $usuario);
-    $seguridad = strtolower((string) (getenv('SMTP_SECURE') ?: 'tls'));
-    $puerto = (int) (getenv('SMTP_PORT') ?: ($seguridad === 'ssl' ? 465 : 587));
+    $clave = preg_replace('/\s+/', '', "faroorzagbtqgxsj");
+    $desde = $usuario;
+    $seguridad = 'tls';
+    $puerto = 587;
 
     // Evita inyección de cabeceras
     if (!filter_var($para, FILTER_VALIDATE_EMAIL) || !filter_var($desde, FILTER_VALIDATE_EMAIL) || $host === '') {

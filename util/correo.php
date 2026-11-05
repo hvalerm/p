@@ -24,10 +24,12 @@ function smtpLeer($fp): array
 
 function smtpComando($fp, string $cmd, array $esperados): bool
 {
+    global $smtpUltimaRespuesta;
     if ($cmd !== '') {
         fwrite($fp, $cmd . "\r\n");
     }
-    [$codigo] = smtpLeer($fp);
+    [$codigo, $texto] = smtpLeer($fp);
+    $smtpUltimaRespuesta = trim($texto);
     return in_array($codigo, $esperados, true);
 }
 
@@ -35,7 +37,8 @@ function enviarCorreo(string $para, string $asunto, string $texto): bool
 {
     $host = (string) getenv('SMTP_HOST');
     $usuario = (string) getenv('SMTP_USER');
-    $clave = (string) getenv('SMTP_PASS');
+    // Gmail muestra la contraseña de aplicación en grupos con espacios; no forman parte de la clave
+    $clave = preg_replace('/\s+/', '', (string) getenv('SMTP_PASS'));
     $desde = (string) (getenv('SMTP_FROM') ?: $usuario);
     $seguridad = strtolower((string) (getenv('SMTP_SECURE') ?: 'tls'));
     $puerto = (int) (getenv('SMTP_PORT') ?: ($seguridad === 'ssl' ? 465 : 587));
@@ -97,7 +100,8 @@ function enviarCorreo(string $para, string $asunto, string $texto): bool
         smtpComando($fp, 'QUIT', [221]);
         return true;
     } catch (RuntimeException $e) {
-        error_log('SMTP: falló en ' . $e->getMessage());
+        global $smtpUltimaRespuesta;
+        error_log('SMTP: falló en ' . $e->getMessage() . ' (respuesta del servidor: ' . ($smtpUltimaRespuesta ?? 'ninguna') . ')');
         return false;
     } finally {
         fclose($fp);

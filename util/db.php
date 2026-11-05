@@ -2,6 +2,7 @@
 // Conexión a MySQL en Aiven (SSL requerido)
 // Zona horaria del negocio: se usa para comparar la fecha de licencia_expira
 date_default_timezone_set('America/Guayaquil');
+require_once __DIR__ . '/seguridad.php';
 
 define('DB_HOST', getenv('DB_HOST'));
 define('DB_PORT', getenv('DB_PORT'));

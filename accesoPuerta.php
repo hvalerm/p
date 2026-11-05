@@ -2,6 +2,9 @@
 require_once __DIR__ . '/util/db.php';
 
 header('Cache-Control: no-store');
+// El token viaja en la URL: no debe filtrarse por Referer ni indexarse
+header('Referrer-Policy: no-referrer');
+header('X-Robots-Tag: noindex, nofollow');
 
 $h = fn($s) => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
 
@@ -48,7 +51,6 @@ $mensajes = [
     'fuera_de_horario' => 'Este acceso no está vigente en este momento.',
     'error' => 'Ocurrió un error. Inténtalo nuevamente en unos minutos.',
 ];
-$urlApertura = 'ApiSystem/ordenDeApertura_porLinkAcceso.php?token=' . rawurlencode((string) $token);
 $fmt = fn($f) => (new DateTime($f))->format('d/m/Y H:i');
 ?>
 <!DOCTYPE html>
@@ -69,7 +71,7 @@ $fmt = fn($f) => (new DateTime($f))->format('d/m/Y H:i');
         .advertencia { margin: 20px 0 10px; padding: 16px; border: 3px solid #c0392b; border-radius: 10px; background: #fdecea; color: #8e1b10; text-align: left; font-weight: 700; line-height: 1.45; }
         .advertencia .titulo { display: block; font-size: 1.1rem; margin-bottom: 6px; text-transform: uppercase; }
         .unico { margin-bottom: 18px; padding: 12px 14px; border: 2px solid #e67e22; border-radius: 10px; background: #fff4e5; color: #8a4b08; text-align: left; font-weight: 600; line-height: 1.4; }
-        .btn { display: block; width: 100%; padding: 15px; border-radius: 8px; background: #27ae60; color: #fff; font-size: 1.1rem; font-weight: 700; text-decoration: none; }
+        .btn { display: block; width: 100%; padding: 15px; border-radius: 8px; background: #27ae60; color: #fff; font-size: 1.1rem; font-weight: 700; text-decoration: none; border: 0; cursor: pointer; font-family: inherit; }
         .btn:hover { background: #1f8f4f; }
         .estado { padding: 22px 16px; border-radius: 10px; background: #fdecea; color: #8e1b10; font-size: 1.3rem; font-weight: 700; }
     </style>
@@ -88,7 +90,10 @@ $fmt = fn($f) => (new DateTime($f))->format('d/m/Y H:i');
             </div>
             <div class="unico">La apertura es de un único uso: una vez ejecutada, este enlace no podrá volver a utilizarse.</div>
 
-            <a class="btn" href="<?= $h($urlApertura) ?>">Abrir puerta</a>
+            <form method="post" action="ApiSystem/ordenDeApertura_porLinkAcceso.php">
+                <input type="hidden" name="token" value="<?= $h($token) ?>">
+                <button type="submit" class="btn">Abrir puerta</button>
+            </form>
         <?php else: ?>
             <h1>Acceso al alojamiento</h1>
             <div class="estado"><?= $h($mensajes[$estado]) ?></div>

@@ -11,8 +11,13 @@ function responder(int $codigo, bool $ok, string $mensaje): void
     exit;
 }
 
-// Paso 1: recibir el token por GET y validar su formato (solo letras y números, hasta 250 caracteres)
-$token = $_GET['token'] ?? '';
+// Paso 1: recibir el token por POST (un GET lo podría consumir una vista previa del enlace) y validar su formato
+// (solo letras y números, hasta 250 caracteres)
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+    header('Allow: POST');
+    responder(405, false, 'Método no permitido.');
+}
+$token = $_POST['token'] ?? '';
 if (!is_string($token) || !preg_match('/^[A-Za-z0-9]{1,250}$/', $token)) {
     responder(400, false, 'Token no válido.');
 }

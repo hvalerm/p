@@ -4,12 +4,14 @@
 
 const SESION_INACTIVIDAD_MAX = 1800; // 30 minutos
 const URL_LOGIN = '/OpenDoors_V2/login.php';
+require_once __DIR__ . '/seguridad.php';
 
 function iniciarSesionSegura(): void
 {
     if (session_status() === PHP_SESSION_NONE) {
         session_set_cookie_params([
             'httponly' => true,
+            'secure'   => esHttps(),
             'samesite' => 'Lax',
         ]);
         session_start();

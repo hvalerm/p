@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/util/verificar.php';
 require __DIR__ . '/util/db.php';
+require_once __DIR__ . '/util/intentos_login.php';
 
 iniciarSesionSegura();
 
@@ -26,7 +27,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Ingresa tu usuario y contraseña.';
     } else {
         try {
-            $stmt = getPDO()->prepare(
+            $pdo = getPDO();
+            $clave = claveIntentos($usuario);
+            // Si la tabla de intentos aún no existe, el login sigue funcionando (se registra el error)
+            $limitarIntentos = true;
+            $segBloqueo = 0;
+            try {
+                $segBloqueo = segundosBloqueado($pdo, $clave);
+            } catch (PDOException $e) {
+                $limitarIntentos = false;
+                error_log('Control de intentos no disponible: ' . $e->getMessage());
+            }
+
+            if ($segBloqueo > 0) {
+                $error = 'Demasiados intentos fallidos. Inténtalo de nuevo en ' . max((int) ceil($segBloqueo / 60), 1) . ' minuto(s).';
+            } else {
+            $stmt = $pdo->prepare(
                 'SELECT c.id_cuenta AS id,
                         COALESCE(NULLIF(TRIM(c.nombre_cuenta), \'\'), c.correo_cuenta) AS nombre,
                         c.pwd AS password,
@@ -39,6 +55,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$usuario]);
             $row = $stmt->fetch();
             if ($row && password_verify($password, $row['password'])) {
+                if ($limitarIntentos) {
+                    limpiarIntentos($pdo, $clave);
+                }
                 if (new DateTime($row['licencia_expira']) < new DateTime()) {
                     session_regenerate_id(true);
                     $_SESSION['licencia_expirada'] = [
@@ -57,6 +76,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
             $error = 'Usuario o contraseña incorrectos.';
+            if ($limitarIntentos) {
+                $quedan = registrarFallo($pdo, $clave);
+                if ($quedan === 0) {
+                    $error = 'Demasiados intentos fallidos. Inténtalo de nuevo en ' . LOGIN_BLOQUEO_MINUTOS . ' minuto(s).';
+                } else {
+                    $error .= ' Te ' . ($quedan === 1 ? 'queda 1 intento.' : 'quedan ' . $quedan . ' intentos.');
+                }
+            }
+            }
         } catch (PDOException $e) {
             error_log('Error al iniciar sesión: ' . $e->getMessage());
             $error = 'No se pudo consultar la cuenta. Inténtalo más tarde.';
@@ -147,6 +175,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h1>OpenDoors</h1>
         <p class="sub">Inicia sesión para continuar</p>
 
+        <?php if (isset($_GET['cambiada'])): ?>
+            <div style="background:#e8f5ec;color:#17632c;border:1px solid #a9d8b8;padding:10px 12px;border-radius:8px;font-size:.88rem;margin-bottom:18px;" role="status">Contraseña actualizada. Ya puedes iniciar sesión.</div>
+        <?php endif; ?>
         <?php if ($error): ?>
             <div class="error" role="alert"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
         <?php endif; ?>
@@ -164,6 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <button type="submit" class="submit">Ingresar</button>
         </form>
+        <p style="text-align:center;margin-top:16px;font-size:.88rem;"><a href="recuperar_password.php" style="color:#2c6f94;text-decoration:none;">¿Olvidaste tu contraseña?</a></p>
         <footer>&copy; <?= date('Y') ?> OpenDoors</footer>
     </main>
 </body>

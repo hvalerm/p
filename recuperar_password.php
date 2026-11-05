@@ -10,7 +10,7 @@ if (haySesionActiva()) {
 }
 
 $error = isset($_GET['vencido']) ? 'El código venció o ya no es válido. Solicita uno nuevo.' : '';
-$correo = '';
+$correo = trim((string) ($_GET['correo'] ?? ''));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $correo = trim((string) ($_POST['correo'] ?? ''));

@@ -195,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <button type="submit" class="submit">Ingresar</button>
         </form>
-        <p style="text-align:center;margin-top:16px;font-size:.88rem;"><a href="recuperar_password.php" style="color:#2c6f94;text-decoration:none;">¿Olvidaste tu contraseña?</a></p>
+        <p style="text-align:center;margin-top:16px;font-size:.88rem;"><a href="recuperar_password.php?correo=<?= rawurlencode($usuario) ?>" style="color:#2c6f94;text-decoration:none;">¿Olvidaste tu contraseña?</a></p>
         <footer>&copy; <?= date('Y') ?> OpenDoors</footer>
     </main>
 </body>

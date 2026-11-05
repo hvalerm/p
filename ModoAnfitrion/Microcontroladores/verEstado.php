@@ -8,7 +8,7 @@ $embed = isset($_GET['embed']);
 $unidades = [];
 $error = '';
 
-// Solo unidades de control de la empresa de la cuenta con sesión iniciada
+// Solo dispositivos de apertura de la empresa de la cuenta con sesión iniciada
 try {
     $stmt = getPDO()->prepare(
         'SELECT m.id_microcontrolador, l.nombre_local, e.nombre_empresa,
@@ -25,7 +25,7 @@ try {
     $unidades = $stmt->fetchAll();
 } catch (PDOException $e) {
     error_log('Error en verEstado: ' . $e->getMessage());
-    $error = 'No se pudieron cargar las unidades de control.';
+    $error = 'No se pudieron cargar los dispositivos de apertura.';
 }
 
 $fmt = fn($f) => $f ? date('d/m/Y H:i:s', strtotime($f)) : '';
@@ -38,7 +38,7 @@ $activo = fn($seg) => $seg !== null && (int) $seg <= 15;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Unidades de control | OpenDoors</title>
+    <title>Dispositivos de apertura | OpenDoors</title>
     <link rel="icon" type="image/png" href="../../img/OpenDoors.png">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -62,12 +62,12 @@ $activo = fn($seg) => $seg !== null && (int) $seg <= 15;
 </head>
 <body>
     <section class="panel">
-        <h1>Unidades de control</h1>
+        <h1>Dispositivos de apertura</h1>
 
         <?php if ($error): ?>
             <p class="vacio"><?= $h($error) ?></p>
         <?php elseif (!$unidades): ?>
-            <p class="vacio">Tu empresa no tiene unidades de control registradas.</p>
+            <p class="vacio">Tu empresa no tiene dispositivos de apertura registrados.</p>
         <?php else: ?>
             <div class="filtros">
                 <div><label for="f-id">ID</label><input type="search" id="f-id" data-col="0" autocomplete="off"></div>
@@ -140,7 +140,7 @@ $activo = fn($seg) => $seg !== null && (int) $seg <= 15;
                     if (ok) visibles++;
                 });
                 sinResultados.hidden = visibles !== 0;
-                contador.textContent = visibles + ' de ' + datos.length + ' unidades de control';
+                contador.textContent = visibles + ' de ' + datos.length + ' dispositivos de apertura';
             }
 
             campos.forEach(function (c) {

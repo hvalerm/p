@@ -8,7 +8,7 @@ $embed = isset($_GET['embed']);
 $unidades = [];
 $error = '';
 
-// Solo unidades de control de la empresa de la cuenta con sesión iniciada
+// Solo dispositivos de apertura de la empresa de la cuenta con sesión iniciada
 try {
     $stmt = getPDO()->prepare(
         'SELECT m.id_microcontrolador, l.nombre_local, l.direccion_local, m.cantidadAperturas
@@ -22,7 +22,7 @@ try {
     $unidades = $stmt->fetchAll();
 } catch (PDOException $e) {
     error_log('Error en verActividad: ' . $e->getMessage());
-    $error = 'No se pudo cargar la actividad de las unidades de control.';
+    $error = 'No se pudo cargar la actividad de los dispositivos de apertura.';
 }
 ?>
 <!DOCTYPE html>
@@ -30,7 +30,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Actividad de unidades de control | OpenDoors</title>
+    <title>Actividad de dispositivos de apertura | OpenDoors</title>
     <link rel="icon" type="image/png" href="../../img/OpenDoors.png">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -47,12 +47,12 @@ try {
 </head>
 <body>
     <section class="panel">
-        <h1>Actividad de unidades de control</h1>
+        <h1>Actividad de dispositivos de apertura</h1>
 
         <?php if ($error): ?>
             <p class="vacio"><?= $h($error) ?></p>
         <?php elseif (!$unidades): ?>
-            <p class="vacio">Tu empresa no tiene unidades de control registradas.</p>
+            <p class="vacio">Tu empresa no tiene dispositivos de apertura registrados.</p>
         <?php else: ?>
             <div class="tabla">
                 <table>

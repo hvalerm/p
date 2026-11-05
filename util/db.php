@@ -9,7 +9,6 @@ define('DB_NAME', getenv('DB_NAME'));
 define('DB_USER', getenv('DB_USER'));
 define('DB_PASS', getenv('DB_PASS'));
 
-
 define('DB_CHARSET', 'utf8mb4');
 // Opcional: guarda el "CA certificate" de Aiven en util/ca.pem para verificar el servidor
 define('DB_SSL_CA', __DIR__ . '/ca.pem');

@@ -29,12 +29,15 @@ if (!$itemsLocales) {
 
 // Estructura del menú: [título, ícono, [hijos]]. Hijo: [título, [hijos], página, clave] u hoja [título]; '-' es un separador.
 $menu = [
+    ['DashBoard', 'M3 3h8v10H3zm10 0h8v6h-8zM3 15h8v6H3zm10-4h8v10h-8z', [
+        ['Resumen'],
+    ]],
     ['OpenDoors', 'M5 3h14v18H5zm9 8a1 1 0 1 0 0 2 1 1 0 0 0 0-2z', $itemsLocales],
     ['Accesos', 'M12.65 10A6 6 0 1 0 12.65 14H17v4h4v-4h2v-4zM7 14a2 2 0 1 1 0-4 2 2 0 0 1 0 4z', [
         ['Crear', null, 'Accesos/SeleccionarLocalAcceso.php'], ['Listar', null, 'Accesos/listarAccesos.php'], ['Revocar', null, 'Accesos/busquedaAccesoRevocar.php'],
     ]],
     ['Unidades de control', 'M6 6h12v12H6zM9 9v6h6V9zM7 3h2v3H7zm4 0h2v3h-2zm4 0h2v3h-2zM7 18h2v3H7zm4 0h2v3h-2zm4 0h2v3h-2z', [
-        ['Ver estado'], ['Ver actividad'],
+        ['Ver estado', null, 'Microcontroladores/verEstado.php'], ['Ver actividad'],
     ]],
 ];
 

@@ -29,9 +29,7 @@ if (!$itemsLocales) {
 
 // Estructura del menú: [título, ícono, [hijos]]. Hijo: [título, [hijos], página, clave] u hoja [título]; '-' es un separador.
 $menu = [
-    ['DashBoard', 'M3 3h8v10H3zm10 0h8v6h-8zM3 15h8v6H3zm10-4h8v10h-8z', [
-        ['Resumen'],
-    ]],
+    ['DashBoard', 'M3 3h8v10H3zm10 0h8v6h-8zM3 15h8v6H3zm10-4h8v10h-8z', [], 'Dashboard/resumen.php'],
     ['OpenDoors', 'M5 3h14v18H5zm9 8a1 1 0 1 0 0 2 1 1 0 0 0 0-2z', $itemsLocales],
     ['Accesos', 'M12.65 10A6 6 0 1 0 12.65 14H17v4h4v-4h2v-4zM7 14a2 2 0 1 1 0-4 2 2 0 0 1 0 4z', [
         ['Crear', null, 'Accesos/SeleccionarLocalAcceso.php'], ['Listar', null, 'Accesos/listarAccesos.php'], ['Revocar', null, 'Accesos/busquedaAccesoRevocar.php'],
@@ -81,8 +79,21 @@ function renderItems(array $items, string $prefix, array $labels, int $depth, ar
 }
 
 $navHtml = '';
-foreach ($menu as [$titulo, $icono, $hijos]) {
+foreach ($menu as $entrada) {
+    [$titulo, $icono, $hijos] = $entrada;
+    $pagina = $entrada[3] ?? null;
     $clave = slug($titulo);
+    if (!$hijos) {
+        // Menú de acceso directo, sin submenús
+        $validas[$clave] = [$titulo];
+        if (!empty($pagina)) {
+            $paginas[$clave] = $pagina;
+        }
+        $navHtml .= '<div class="group"><a href="?seccion=' . $h($clave) . '" class="item-btn' . ($actual === $clave ? ' active' : '') . '">'
+            . '<svg class="ico" viewBox="0 0 24 24" fill-rule="evenodd"><path d="' . $h($icono) . '"/></svg>'
+            . '<span class="label">' . $h($titulo) . '</span></a></div>';
+        continue;
+    }
     $abierto = str_starts_with($actual, $clave . '/');
     $navHtml .= '<div class="group' . ($abierto ? ' open' : '') . '"><button type="button" class="item-btn" aria-expanded="' . ($abierto ? 'true' : 'false') . '">'
         . '<svg class="ico" viewBox="0 0 24 24" fill-rule="evenodd"><path d="' . $h($icono) . '"/></svg>'
@@ -120,6 +131,8 @@ if (!isset($validas[$actual])) {
         .brand .logo { flex: 0 0 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #2c5364, #3a8fb7); display: flex; align-items: center; justify-content: center; }
         .brand svg { width: 22px; height: 22px; fill: #fff; }
         .brand span { font-weight: 600; }
+        .brand-link { color: inherit; text-decoration: none; }
+        .brand-link:hover { text-decoration: underline; }
 
         nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
         .item-btn, .sub a {
@@ -138,6 +151,7 @@ if (!isset($validas[$actual])) {
         .group.open > .sub { grid-template-rows: 1fr; }
         .sub .item-btn, .sub a { font-size: .92rem; color: #b9cad5; padding-left: calc(46px + (var(--d, 1) - 1) * 16px); }
         .sub a.active { background: rgba(58,143,183,.35); color: #fff; }
+        a.item-btn.active { background: rgba(58,143,183,.35); color: #fff; }
         .sep { height: 1px; margin: 6px 12px 6px 46px; background: rgba(255,255,255,.2); }
 
         .user { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,.1); font-size: .85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -173,13 +187,20 @@ if (!isset($validas[$actual])) {
             body.collapsed .group.open > .sub { grid-template-rows: 1fr !important; }
             body.collapsed .label, body.collapsed .arrow, body.collapsed .brand span, body.collapsed .user { display: initial; }
         }
+        .guia { list-style: none; margin-top: 18px; font-size: .95rem; }
+        .guia ul { list-style: none; margin-left: 12px; padding-left: 16px; border-left: 2px solid #d5dee4; }
+        .guia li { margin: 8px 0; line-height: 1.4; }
+        .guia ul li { position: relative; }
+        .guia ul li::before { content: ''; position: absolute; left: -16px; top: .75em; width: 12px; border-top: 2px solid #d5dee4; }
+        .guia b { color: #1b2a35; }
+        .guia span { color: #6b7a86; }
     </style>
 </head>
 <body>
     <aside class="sidebar" id="sidebar">
         <div class="brand">
             <div class="logo"><svg viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12h-6v-7H9v7H3z"/></svg></div>
-            <span>Modo Anfitrión</span>
+            <span><a href="vistaAnfitrion.php" class="brand-link">Modo Anfitrión</a></span>
             <button type="button" class="cerrar-menu" id="btnCerrarMenu" aria-label="Cerrar menú">&times;</button>
         </div>
         <nav>
@@ -212,6 +233,25 @@ if (!isset($validas[$actual])) {
                 <?php else: ?>
                     <h2>Bienvenido, <?= $h($usuario['nombre']) ?></h2>
                     <p>Selecciona una opción del menú lateral.</p>
+                    <ul class="guia">
+                        <li>📊 <b>DashBoard</b> — <span>Lo importante de tu negocio de un vistazo.</span></li>
+                        <li>🚪 <b>OpenDoors</b> — <span>Tus alojamientos.</span>
+                            <ul><li><b>Cada local</b> — <span>Mira sus datos y ábrelo desde aquí.</span></li></ul>
+                        </li>
+                        <li>🔑 <b>Accesos</b> — <span>Las llaves digitales para tus huéspedes.</span>
+                            <ul>
+                                <li><b>Crear</b> — <span>Genera un enlace de acceso para un huésped.</span></li>
+                                <li><b>Listar</b> — <span>Consulta los accesos y si ya se usaron.</span></li>
+                                <li><b>Revocar</b> — <span>Cancela un acceso antes de que se use.</span></li>
+                            </ul>
+                        </li>
+                        <li>📟 <b>Dispositivos de apertura</b> — <span>Los equipos que abren tus puertas.</span>
+                            <ul>
+                                <li><b>Ver estado</b> — <span>Mira cuáles están conectados (Activo) o caídos (Inactivo).</span></li>
+                                <li><b>Ver actividad</b> — <span>Cuenta cuántas veces se ha abierto cada puerta.</span></li>
+                            </ul>
+                        </li>
+                    </ul>
                 <?php endif; ?>
             </section>
             <?php endif; ?>
@@ -223,7 +263,7 @@ if (!isset($validas[$actual])) {
 
         document.querySelector('nav').addEventListener('click', function (e) {
             var btn = e.target.closest('.item-btn');
-            if (!btn) return;
+            if (!btn || btn.tagName === 'A') return;
             var grupo = btn.parentElement;
             var esRaiz = grupo.parentElement.tagName === 'NAV';
             var movil = window.matchMedia('(max-width: 768px)').matches;

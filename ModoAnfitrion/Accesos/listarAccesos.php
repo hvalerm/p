@@ -12,7 +12,8 @@ $error = '';
 try {
     $stmt = getPDO()->prepare(
         'SELECT a.id_acceso, a.activo_desde, a.activo_hasta, l.nombre_local, e.nombre_empresa,
-                a.token, a.ejecutado, a.habilitado
+                a.token, a.ejecutado, a.habilitado,
+                (NOW() BETWEEN a.activo_desde AND a.activo_hasta) AS en_rango
          FROM accesos a
          INNER JOIN locales l ON l.id_local = a.id_local AND l.id_empresa = a.id_empresa
          INNER JOIN empresas e ON e.id_empresa = a.id_empresa
@@ -56,6 +57,8 @@ $si = fn($v) => $v ? 'Sí' : 'No';
         .fila:hover { background: #f2f7fa; }
         .enlace-id { color: #2c5364; font-weight: 600; text-decoration: none; }
         .vacio { text-align: center; color: #6b7a86; padding: 20px 0; }
+        .si { color: #1e8e3e; font-weight: 700; }
+        .no { color: #c0392b; font-weight: 700; }
         [hidden] { display: none !important; }
     </style>
 </head>
@@ -79,12 +82,14 @@ $si = fn($v) => $v ? 'Sí' : 'No';
                     <select id="f-ejecutado" data-col="6" data-exacto="1"><option value="">Todos</option><option>Sí</option><option>No</option></select></div>
                 <div><label for="f-habilitado">Habilitado</label>
                     <select id="f-habilitado" data-col="7" data-exacto="1"><option value="">Todos</option><option>Sí</option><option>No</option></select></div>
+                <div><label for="f-enrango">¿Se puede usar?</label>
+                    <select id="f-enrango" data-col="8" data-exacto="1"><option value="">Todos</option><option>Sí</option><option>No</option></select></div>
             </div>
             <p class="contador" id="contador" aria-live="polite"></p>
             <div class="tabla">
                 <table>
                     <thead>
-                        <tr><th>ID</th><th>Activo desde</th><th>Activo hasta</th><th>Local</th><th>Empresa</th><th>Token</th><th>Ejecutado</th><th>Habilitado</th></tr>
+                        <tr><th>ID</th><th>Activo desde</th><th>Activo hasta</th><th>Local</th><th>Empresa</th><th>Token</th><th>Ejecutado</th><th>Habilitado</th><th>¿Se puede usar?</th></tr>
                     </thead>
                     <tbody id="cuerpo">
                         <?php foreach ($accesos as $a): ?>
@@ -97,6 +102,7 @@ $si = fn($v) => $v ? 'Sí' : 'No';
                                 <td class="token" title="<?= $h($a['token']) ?>"><?= $h($a['token']) ?></td>
                                 <td><?= $si($a['ejecutado']) ?></td>
                                 <td><?= $si($a['habilitado']) ?></td>
+                                <td class="<?= $a['en_rango'] ? 'si' : 'no' ?>"><?= $si($a['en_rango']) ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

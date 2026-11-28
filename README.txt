@@ -5,6 +5,14 @@ consulta los modulos habilitados para la empresa y carga sus menus desde
 Modulos. Si se elimina un modulo, el panel sigue disponible y muestra
 "Modulo no disponible" para cualquier asignacion que quede en la base.
 Cada modulo debe comprobar por servidor su sesion, empresa y autorizacion.
+El login acepta cuentas con varias empresas habilitadas sin solicitar una
+seleccion. La licencia de la empresa no bloquea la sesion; el acceso se
+determina por la licencia de cada modulo, vigente hasta el final de su fecha.
+El panel agrupa por empresa para cuentas multiempresa y conserva las empresas
+con modulo vencido mostrando un mensaje sin cargar sus funciones.
+Cada pagina valida el parametro empresa con empresaModulo, sin cambiar la
+empresa de otras pestanas. Se siguen rechazando cuentas y empresas
+deshabilitadas o no vinculadas.
 
 Esta instalacion consulta las bases empresas y gestalo en el servidor
 configurado mediante variables de entorno. La conexion MySQL solicita TLS,

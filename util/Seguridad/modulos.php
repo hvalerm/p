@@ -10,17 +10,15 @@ function empresaModulo(string $nombreModulo): array
         http_response_code(400);
         exit('Empresa no válida.');
     }
-    $idEmpresa = filter_var($get ?? $post ?? $_SESSION['empresa_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-    if ($idEmpresa === false) {
-        http_response_code(400);
-        exit('Empresa no válida.');
-    }
     try {
-        $empresa = empresaUnicaCuenta(getPDO(), (int) $_SESSION['usuario_id']);
-        if ((int) $empresa['id_empresa'] !== $idEmpresa) {
-            http_response_code(403);
-            exit('No tienes acceso a esta empresa.');
+        $empresas = empresasHabilitadasCuenta(getPDO(), (int) $_SESSION['usuario_id']);
+        $parametro = $get ?? $post ?? (count($empresas) === 1 ? $empresas[0]['id_empresa'] : null);
+        $idEmpresa = filter_var($parametro, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if ($idEmpresa === false) {
+            http_response_code(400);
+            exit('Empresa no válida.');
         }
+        $empresa = empresaVinculadaCuenta(getPDO(), (int) $_SESSION['usuario_id'], $idEmpresa);
         $stmt = getPDO()->prepare(
             'SELECT m.nombreModulo FROM empresas_modulos em
              INNER JOIN modulos m ON m.idModulo = em.idModulo

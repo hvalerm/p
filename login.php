@@ -35,14 +35,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$usuario]);
                 $cuenta = $stmt->fetch();
                 if ($cuenta && password_verify($password, $cuenta['pwd'])) {
-                    $empresa = empresaUnicaCuenta($pdo, (int) $cuenta['id']);
-                    if (new DateTimeImmutable($empresa['licencia_expira']) < new DateTimeImmutable()) {
-                        throw new DomainException('La licencia de la empresa ha expirado.');
-                    }
+                    $empresas = empresasHabilitadasCuenta($pdo, (int) $cuenta['id']);
                     limpiarIntentos($pdo, $clave);
                     session_regenerate_id(true);
                     $_SESSION['usuario_id'] = (int) $cuenta['id'];
-                    $_SESSION['empresa_id'] = (int) $empresa['id_empresa'];
+                    unset($_SESSION['empresa_id']);
+                    if (count($empresas) === 1) {
+                        $_SESSION['empresa_id'] = (int) $empresas[0]['id_empresa'];
+                    }
                     $_SESSION['nombre'] = $cuenta['nombre'];
                     $_SESSION['ultima_actividad'] = time();
                     $_SESSION['huella'] = hash('sha256', $_SERVER['HTTP_USER_AGENT'] ?? '');

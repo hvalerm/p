@@ -43,3 +43,21 @@ foreach ([2, 3, 4, 5] as $cuenta) {
     }
 }
 echo "Pruebas de sesión y empresa: correctas.\n";
+
+$pdo->exec("UPDATE empresas SET licenciaExpira = '2000-01-01' WHERE idEmpresa = 1");
+if (count(empresasHabilitadasCuenta($pdo, 3)) !== 2
+    || (int) empresaVinculadaCuenta($pdo, 3, 2)['id_empresa'] !== 2
+    || (int) empresaVinculadaCuenta($pdo, 3, 1)['id_empresa'] !== 1
+    || (int) empresaVinculadaCuenta($pdo, 3, 2)['id_empresa'] !== 2
+    || count(empresasHabilitadasCuenta($pdo, 1)) !== 1) {
+    throw new RuntimeException('La cuenta multiempresa o la licencia de empresa bloquean el acceso.');
+}
+foreach ([[1, 2], [2, 1], [4, 3], [5, 1]] as [$cuenta, $empresa]) {
+    try {
+        empresaVinculadaCuenta($pdo, $cuenta, $empresa);
+        throw new RuntimeException('Acepta una empresa no autorizada.');
+    } catch (DomainException $e) {
+        // El rechazo es el resultado esperado.
+    }
+}
+echo "Pruebas de cuentas multiempresa: correctas.\n";

@@ -29,7 +29,7 @@ function iniciarSesionSegura(): void
     }
 }
 
-function empresaUnicaCuenta(PDO $pdo, int $idCuenta): array
+function empresasCuenta(PDO $pdo, int $idCuenta): array
 {
     $stmt = $pdo->prepare(
         'SELECT ec.idEmpresa AS id_empresa, e.nombreEmpresa AS nombre_empresa,
@@ -38,10 +38,35 @@ function empresaUnicaCuenta(PDO $pdo, int $idCuenta): array
          FROM empresas_cuentas ec
          INNER JOIN empresas e ON e.idEmpresa = ec.idEmpresa
          INNER JOIN cuentas c ON c.idCuenta = ec.idCuenta
-         WHERE ec.idCuenta = ? ORDER BY ec.idEmpresa LIMIT 2'
+         WHERE ec.idCuenta = ? ORDER BY e.nombreEmpresa, ec.idEmpresa'
     );
     $stmt->execute([$idCuenta]);
-    $empresas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function empresasHabilitadasCuenta(PDO $pdo, int $idCuenta): array
+{
+    $empresas = array_values(array_filter(empresasCuenta($pdo, $idCuenta),
+        static fn(array $empresa): bool => (bool) $empresa['cuenta_habilitada'] && (bool) $empresa['empresa_habilitada']));
+    if (!$empresas) {
+        throw new DomainException('La cuenta no tiene empresas vinculadas y habilitadas.');
+    }
+    return $empresas;
+}
+
+function empresaVinculadaCuenta(PDO $pdo, int $idCuenta, int $idEmpresa): array
+{
+    foreach (empresasHabilitadasCuenta($pdo, $idCuenta) as $empresa) {
+        if ((int) $empresa['id_empresa'] === $idEmpresa) {
+            return $empresa;
+        }
+    }
+    throw new DomainException('La cuenta no tiene acceso a esta empresa.');
+}
+
+function empresaUnicaCuenta(PDO $pdo, int $idCuenta): array
+{
+    $empresas = empresasCuenta($pdo, $idCuenta);
     if (count($empresas) !== 1 || !$empresas[0]['cuenta_habilitada'] || !$empresas[0]['empresa_habilitada']) {
         throw new DomainException('La cuenta no tiene una única empresa habilitada.');
     }
@@ -69,7 +94,7 @@ function haySesionActiva(): bool
         return false;
     }
     try {
-        $empresa = empresaUnicaCuenta(getPDO(), (int) $_SESSION['usuario_id']);
+        empresasHabilitadasCuenta(getPDO(), (int) $_SESSION['usuario_id']);
     } catch (DomainException $e) {
         error_log('Sesión invalidada: ' . $e->getMessage());
         cerrarSesion();
@@ -78,11 +103,6 @@ function haySesionActiva(): bool
         error_log('No se pudo validar la sesión: ' . $e->getMessage());
         http_response_code(503);
         exit('No se pudo validar la sesión. Inténtalo más tarde.');
-    }
-    if ((int) ($_SESSION['empresa_id'] ?? 0) !== (int) $empresa['id_empresa']
-        || new DateTimeImmutable($empresa['licencia_expira']) < new DateTimeImmutable()) {
-        cerrarSesion();
-        return false;
     }
     $_SESSION['ultima_actividad'] = time();
     return true;

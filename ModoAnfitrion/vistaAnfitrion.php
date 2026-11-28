@@ -7,15 +7,22 @@ $h = fn($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 
 try {
     require_once __DIR__ . '/../util/BaseDatos/db.php';
+    $multiempresa = count(empresasCuenta(getPDO(), (int) $_SESSION['usuario_id'])) > 1;
     $stmt = getPDO()->prepare(
-        'SELECT m.idModulo, m.nombreModulo, em.idEmpresa
-         FROM empresas_modulos em
+        'SELECT m.idModulo, m.nombreModulo, e.idEmpresa, e.nombreEmpresa,
+                (DATE(em.licenciaExpira) >= CURRENT_DATE) AS vigente
+         FROM empresas_cuentas ec
+         INNER JOIN empresas e ON e.idEmpresa = ec.idEmpresa
+         INNER JOIN empresas_modulos em ON em.idEmpresa = e.idEmpresa
          INNER JOIN modulos m ON m.idModulo = em.idModulo
-         WHERE em.idEmpresa = ? AND em.habilitado = 1 AND DATE(em.licenciaExpira) >= CURRENT_DATE
-         ORDER BY m.nombreModulo, m.idModulo'
+         WHERE ec.idCuenta = ? AND e.habilitado = 1 AND em.habilitado = 1
+         ORDER BY m.nombreModulo, m.idModulo, e.nombreEmpresa, e.idEmpresa'
     );
-    $stmt->execute([(int) $_SESSION['empresa_id']]);
-    $modulos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt->execute([(int) $_SESSION['usuario_id']]);
+    $modulos = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $asignacion) {
+        $modulos[(int) $asignacion['idModulo']][] = $asignacion;
+    }
 } catch (PDOException | RuntimeException $e) {
     error_log('No se pudieron cargar los módulos de la empresa: ' . $e->getMessage());
     http_response_code(503);
@@ -35,7 +42,24 @@ if ($carpetasModulos === false) {
     http_response_code(503);
     exit('No se pudieron cargar los módulos. Inténtalo más tarde.');
 }
-foreach ($modulos as $modulo) {
+function paginasEmpresa(array $items, int $idEmpresa): array
+{
+    foreach ($items as &$item) {
+        if (!is_array($item)) {
+            continue;
+        }
+        if (!empty($item[1])) {
+            $item[1] = paginasEmpresa($item[1], $idEmpresa);
+        }
+        if (!empty($item[2])) {
+            $item[2] .= (str_contains($item[2], '?') ? '&' : '?') . 'empresa=' . $idEmpresa;
+        }
+    }
+    return $items;
+}
+
+foreach ($modulos as $asignaciones) {
+    $modulo = $asignaciones[0];
     $nombreModulo = $modulo['nombreModulo'];
     $claveModulo = 'modulo-' . (int) $modulo['idModulo'];
     $archivo = __DIR__ . '/../Modulos/' . $nombreModulo . '/menuLateral.php';
@@ -44,9 +68,16 @@ foreach ($modulos as $modulo) {
         error_log('Módulo habilitado sin menú disponible: ' . $nombreModulo);
         $noDisponibles[$claveModulo] = true;
         $noDisponibles['configuracion/' . $claveModulo] = true;
+        $grupos = [];
+        if ($multiempresa || !$modulo['vigente']) {
+            foreach ($asignaciones as $asignacion) {
+                $grupos[] = [$asignacion['nombreEmpresa'], [], null, 'empresa-' . (int) $asignacion['idEmpresa'], $iconoModulo,
+                    $asignacion['vigente'] ? 'Módulo no disponible.' : 'La licencia del módulo expiró.'];
+            }
+        }
         $definicionesModulos[] = [
-            'principal' => [$nombreModulo, $iconoModulo, [], null, $claveModulo],
-            'configuracion' => [$nombreModulo, null, null, $claveModulo, $iconoModulo],
+            'principal' => [$nombreModulo, $iconoModulo, $grupos, null, $claveModulo],
+            'configuracion' => [$nombreModulo, $grupos ?: null, null, $claveModulo, $iconoModulo],
         ];
         continue;
     }
@@ -55,9 +86,36 @@ foreach ($modulos as $modulo) {
         if (!is_callable($construirMenu)) {
             throw new UnexpectedValueException('El archivo de menú no devuelve una función.');
         }
-        $definicion = $construirMenu($modulo, $nombreWeb);
-        if (!is_array($definicion) || !isset($definicion['principal'], $definicion['configuracion'])) {
-            throw new UnexpectedValueException('Definición de menú incompleta.');
+        $definicion = null;
+        $grupos = [];
+        $gruposConfiguracion = [];
+        foreach ($asignaciones as $asignacion) {
+            $idEmpresa = (int) $asignacion['idEmpresa'];
+            $claveEmpresa = 'empresa-' . $idEmpresa;
+            if (!$asignacion['vigente']) {
+                $grupo = [$asignacion['nombreEmpresa'], [], null, $claveEmpresa, $iconoModulo, 'La licencia del módulo expiró.'];
+                $grupos[] = $grupo;
+                $gruposConfiguracion[] = $grupo;
+                continue;
+            }
+            $asignacion['multiempresa'] = $multiempresa;
+            $actualDefinicion = $construirMenu($asignacion, $nombreWeb);
+            if (!is_array($actualDefinicion) || !isset($actualDefinicion['principal'], $actualDefinicion['configuracion'])) {
+                throw new UnexpectedValueException('Definición de menú incompleta.');
+            }
+            $definicion ??= $actualDefinicion;
+            $grupos[] = [$asignacion['nombreEmpresa'], paginasEmpresa($actualDefinicion['principal'][2], $idEmpresa), null, $claveEmpresa, $iconoModulo];
+            $gruposConfiguracion[] = [$asignacion['nombreEmpresa'], paginasEmpresa($actualDefinicion['configuracion'][1], $idEmpresa), null, $claveEmpresa, $iconoModulo];
+        }
+        $definicion ??= [
+            'principal' => [$nombreModulo, $iconoModulo, [], null, $claveModulo],
+            'configuracion' => [$nombreModulo, [], null, $claveModulo, $iconoModulo],
+        ];
+        if ($multiempresa || !$asignaciones[0]['vigente']) {
+            $definicion['principal'][2] = $grupos;
+            $definicion['principal'][3] = null;
+            $definicion['configuracion'][1] = $gruposConfiguracion;
+            $definicion['configuracion'][2] = null;
         }
         $definicionesModulos[] = $definicion;
     } catch (PDOException | UnexpectedValueException $e) {

@@ -43,8 +43,9 @@ Instalacion
    verificadas util/Seguridad/verificar.php, util/Seguridad/modulos.php,
    util/BaseDatos/db.php y util/BaseDatos/conexion_mysql.php. El anfitrion
    debe agrupar por empresa y validar cuenta, empresa, habilitacion y licencia
-   mediante empresaModulo; no usar la vista local de una sola empresa para
-   probar multiempresa.
+   mediante empresaModulo. El anfitrion independiente tambien implementa
+   ese contrato; la vista ficticia ElementosVistaBasica solo simula una
+   empresa.
 3. Registrar el nombre exacto GESTALO en la tabla general modulos y asignar
    y habilitarlo en empresas_modulos para la empresa correspondiente. Usar
    el procedimiento administrativo adecuado al esquema real del anfitrion.

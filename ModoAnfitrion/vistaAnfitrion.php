@@ -62,7 +62,7 @@ foreach ($modulos as $asignaciones) {
     $modulo = $asignaciones[0];
     $nombreModulo = $modulo['nombreModulo'];
     $iconoEmpresa = $nombreModulo === 'GESTALO'
-        ? 'M4 3h16v18h-6v-4h-4v4H4zm3 3v2h2V6zm4 0v2h2V6zm4 0v2h2V6zM7 10v2h2v-2zm4 0v2h2v-2zm4 0v2h2v-2zM7 14v2h2v-2zm8 0v2h2v-2z'
+        ? 'M4 2h12v20H4zM7 5v2h2V5zm4 0v2h2V5zM7 9v2h2V9zm4 0v2h2V9zm-4 4v2h2v-2zm4 0v2h2v-2zm-2 4v5h2v-5zm9-7h2v12h-2z'
         : $iconoModulo;
     $claveModulo = 'modulo-' . (int) $modulo['idModulo'];
     $archivo = __DIR__ . '/../Modulos/' . $nombreModulo . '/menuLateral.php';

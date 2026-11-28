@@ -46,6 +46,12 @@ con contrasenas en scripts compartidos ni en archivos versionados.
 
 HTTPS LOCAL CON XAMPP
 
+El Dockerfile no usa Composer porque este proyecto no tiene dependencias
+de Composer. Instala PDO MySQL y mbstring y bloquea el acceso HTTP a util,
+tests, menus internos y archivos de configuracion o certificados.
+Para Render aun debe adaptarse la deteccion de HTTPS al proxy del servicio;
+el script iniciar-https.ps1 es exclusivo de las pruebas locales con XAMPP.
+
 Requiere Apache y PHP de XAMPP en C:\xampp, PowerShell, PDO MySQL y mbstring.
 Conecta el celular a la misma red Wi-Fi. En PowerShell ejecuta ipconfig y
 busca la direccion IPv4 de Wi-Fi. Desde la raiz del proyecto ejecuta:

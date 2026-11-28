@@ -1,0 +1,352 @@
+PROMPT PARA DESARROLLAR UN MODULO INTEGRABLE EN OPENDOORS V2
+
+Actua como agente de desarrollo. Te indicare el nombre exacto, las funciones
+y las reglas de negocio de un modulo nuevo. Desarrollalo junto conmigo en un
+proyecto separado, por etapas, de modo que su carpeta pueda integrarse en
+OpenDoors V2. Implementa solo lo que solicite en cada etapa; no adelantes
+funciones ni conviertas una propuesta en una decision sin consultarme.
+
+Este documento describe lo observado en una copia del anfitrion y puede
+quedar desactualizado. Comprueba el codigo real antes de depender de el. Si
+no tienes acceso, declara las dependencias y las verificaciones pendientes:
+no inventes archivos, esquemas, funciones, permisos ni resultados de pruebas.
+
+1. ALCANCE Y FORMA DE TRABAJO
+
+- Antes de implementar, identifica o pregunta el nombre exacto del modulo,
+  sus funciones, reglas de negocio, usuarios, permisos, datos, integraciones,
+  fechas y requisitos de instalacion que sean relevantes para la etapa.
+- Pregunta cuando falte una decision que cambie el comportamiento, la
+  arquitectura, los permisos o las reglas de negocio. Puedes recomendar una
+  opcion, pero no la presentes como acordada antes de recibir confirmacion.
+- Desarrolla por etapas conforme a mis indicaciones. Haz sugerencias cuando
+  detectes riesgos o mejoras, distinguiendolas de lo ya aprobado.
+- El nombre GESTALO aparece en este documento solo como ejemplo existente.
+  Sus requisitos, tablas, reglas y base de datos no se aplican automaticamente
+  a otro modulo. El ejemplo del anfitrion no es una funcionalidad terminada.
+- No copies ni modifiques datos reales para crear ejemplos o pruebas. No
+  incluyas credenciales, claves ni informacion sensible en la entrega.
+
+2. ENTREGA E INTEGRACION
+
+La entrega debe estar dentro de una carpeta autocontenida cuyo nombre sea
+exactamente el del modulo, incluyendo mayusculas y minusculas:
+
+Modulos/
+  <NombreExacto>/
+    menuLateral.php
+    Nucleo/
+    Configuracion/
+
+En un proyecto separado crea esa estructura para que se pueda copiar
+unicamente <NombreExacto>. Coloca dentro su codigo, recursos, pruebas y
+documentacion, en las subcarpetas apropiadas. Usa nombres, identificadores y
+claves propios que no colisionen con otros modulos.
+
+No modifiques el shell ni otros modulos para integrar el menu. Si necesitas
+un cambio externo inevitable, explicalo y solicita autorizacion en lugar de
+prometer que bastara con copiar la carpeta. Si el anfitrion ya tiene una
+carpeta con ese nombre, compara su contenido y coordina la integracion antes
+de sobrescribirla; conserva los cambios existentes.
+
+La copia no registra ni habilita el modulo, no crea bases o tablas, no aplica
+migraciones, no instala dependencias ni configura servicios. Documenta cada
+paso adicional que sea necesario. Nunca ejecutes migraciones ni alteres una
+base real sin autorizacion expresa; usa una base de pruebas aislada.
+
+3. ANFITRION: LO OBSERVADO Y LO QUE DEBES VERIFICAR
+
+Una copia local del anfitrion estaba en:
+
+  C:\xampp\htdocs\OpenDoors_V2
+
+Esta ruta depende de la maquina; preguntala si no esta disponible. En la
+copia revisada, el proyecto es PHP con MySQL; el entorno descrito para el
+contenedor usa PHP 8.2 y Apache. Antes de integrar, comprueba especialmente:
+
+  Modulos\README.txt
+  ModoAnfitrion\vistaAnfitrion.php
+  util\Seguridad\verificar.php
+  util\Seguridad\seguridad.php
+  util\BaseDatos\db.php
+  util\BaseDatos\conexion_mysql.php
+  Modulos\OpenDoors\Configuracion\comunLocales.php
+  Modulos\OpenDoors\Nucleo\util\db.php
+  .htaccess
+
+En esa copia las utilidades se organizaron en subcarpetas. Las rutas antiguas
+util\verificar.php, util\db.php y util\conexion_mysql.php no existian. No
+asumas que esta estructura sigue igual en otra version: verificala.
+
+El panel consultaba las tablas generales modulos y empresas_modulos para la
+empresa de la sesion, seleccionaba relaciones con habilitado = 1 y buscaba
+una carpeta cuyo nombre coincidiera exactamente con modulos.nombreModulo.
+Si el menu de un modulo habilitado faltaba, lo indicaba como no disponible y
+registraba el problema. No infieras de esto que el modulo este instalado,
+registrado o autorizado en una base concreta.
+
+4. CONTRATO DEL MENU
+
+menuLateral.php devuelve una funcion invocable que recibe:
+
+  $modulo: arreglo que incluye idModulo y nombreModulo.
+  $nombreWeb: nombre de la web configurado por el anfitrion.
+
+La funcion devuelve un arreglo con:
+
+  principal:     [titulo, pathSVG, hijos, paginaOpcional, claveOpcional]
+  configuracion: [titulo, hijos, paginaOpcional, clave, pathSVG]
+  hijo:          [titulo, hijos, pagina, clave, pathSVG,
+                  mensajeListaVacia, idLista]
+
+Los ultimos campos del hijo son opcionales; un hijo puede contener otros
+hijos. El icono es el contenido del atributo d de un SVG path, no el SVG
+completo. Usa claves estables y unicas entre modulos y elementos hermanos.
+
+El arreglo superior puede incluir prioridad numerica (menor aparece antes;
+por defecto 1), script (URL del JavaScript relativa a vistaAnfitrion) y guia
+(ruta absoluta a un fragmento PHP incluido en la pagina de inicio). Incluye
+esos campos solo cuando hagan falta.
+
+Ejemplo orientativo para un modulo ficticio MiModulo:
+
+  <?php
+  return static function (array $modulo, string $nombreWeb): array {
+      $icono = 'M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z';
+      return [
+          'principal' => [$modulo['nombreModulo'], $icono, [
+              ['Inicio', null, '../Modulos/MiModulo/Nucleo/inicio.php',
+                  'inicio-mi-modulo'],
+          ], null, 'modulo-' . (int) $modulo['idModulo']],
+          'configuracion' => [$modulo['nombreModulo'], [
+              ['Ajustes', null,
+                  '../Modulos/MiModulo/Configuracion/ajustes.php',
+                  'ajustes-mi-modulo'],
+          ], null, 'config-mi-modulo', $icono],
+      ];
+  };
+
+Sustituye el nombre y crea las paginas reales si se utilizan. Las rutas del
+menu son URL relativas a vistaAnfitrion, no rutas de archivos del servidor.
+El panel observado agrega embed=1, usando & si la URL ya tiene parametros.
+Las paginas deben funcionar embebidas y conservar embed en sus enlaces y
+redirecciones cuando corresponda. Verifica rutas de CSS, JS y navegacion
+desde la URL que las emite, incluso con la aplicacion en un subdirectorio.
+
+El panel construye el titulo superior a partir de la navegacion. Puede usar
+una guia y scripts opcionales de los modulos, pero un elemento sin pagina
+puede mostrarse como seccion en construccion. No anuncies como funcional una
+pagina que no exista. No dependas de los alias de OpenDoors para otros
+modulos: las reglas observadas de compatibilidad son especificas de aquel.
+
+5. SESION, EMPRESA Y SEGURIDAD
+
+El menu visible no protege las URL. Cada pagina y API privada debe validar en
+el servidor la sesion, la empresa, la habilitacion exacta del modulo y los
+permisos aplicables a la operacion. No confies en IDs, empresa, rol, botones
+ocultos ni valores enviados por el cliente.
+
+En la copia revisada, requerirSesion() esta en util\Seguridad\verificar.php
+y valida la cuenta, la empresa vinculada y la licencia; la empresa validada
+se obtiene de $_SESSION['empresa_id']. La cuenta solo puede tener una
+empresa vinculada por ahora y la sesion expira tras 30 minutos de inactividad.
+Verifica estas reglas en el codigo actual. Requerir sesion no comprueba por
+si solo que el modulo este habilitado.
+
+Para un archivo situado directamente en Nucleo o Configuracion, la ruta
+observada al verificador en su ubicacion final seria:
+
+  __DIR__ . '/../../../util/Seguridad/verificar.php'
+
+Recalcula la ruta si el archivo esta en otra subcarpeta y compruebala despues
+de copiar el modulo. Para habilitacion, consulta con la conexion general
+empresas_modulos y modulos usando la empresa validada, habilitado = 1 y el
+nombre exacto del modulo. Ten en cuenta la intercalacion de la base al
+verificar la coincidencia exacta. Consulta comunLocales.php como ejemplo.
+
+Aplica aislamiento por empresa a todas las consultas y verifica la propiedad
+de cada recurso y relacion. Emplea consultas preparadas, validacion de
+entradas, escape HTML, metodos HTTP adecuados y proteccion CSRF en cambios
+de datos. Registra errores internos sin exponer detalles al usuario; no
+disimules fallos con respuestas que parezcan exitosas. Define y valida
+explicitamente autenticacion y alcance de cualquier API publica.
+
+Las cabeceras observadas restringen recursos y formularios al mismo origen,
+permiten iframe del mismo origen y deshabilitan camara, microfono y
+geolocalizacion. Aunque el iframe declare allow="camera", la politica
+general observada bloquea la camara. Si se necesitan servicios externos,
+permisos del navegador o cambios de CSP/Permissions-Policy, explicalo y
+solicita autorizacion antes de depender de ellos.
+
+La configuracion observada bloquea acceso HTTP directo a menuLateral.php,
+guia.php y Nucleo/util de los modulos. Esto depende de Apache, mod_rewrite y
+su configuracion; no protege automaticamente otras carpetas. No coloques
+secretos ni codigo interno sensible en rutas publicas. Indica cualquier
+regla de servidor adicional necesaria.
+
+6. BASE DE DATOS, FECHAS Y CONFIGURACION
+
+La base general administra cuentas, empresas, licencias, modulos y sus
+asignaciones. OpenDoors tiene otra base propia para sus datos. No asumas que
+un modulo nuevo debe usar la base de OpenDoors ni que ya existe una base
+para el. Pregunta que base y esquema debe usar cuando requiera persistencia.
+
+En la copia revisada:
+
+  util\BaseDatos\db.php ofrece getPDO() para la base general, cuyo nombre
+  se obtiene de DB_NAME_EMPRESAS.
+  util\BaseDatos\conexion_mysql.php ofrece crearConexionPDO($nombre, $zona)
+  y obtiene la configuracion de conexion compartida de variables de entorno.
+  Modulos\OpenDoors\Nucleo\util\db.php muestra una conexion propia del modulo.
+
+Confirma estas APIs y permisos en el anfitrion actual antes de reutilizarlas.
+Si corresponde, manten la conexion del nuevo modulo dentro de su carpeta,
+sin redefinir constantes generales ni agregarla al db.php general. No
+incluyas credenciales en el codigo. Documenta las variables de entorno, CA y
+requisitos de conexion realmente necesarios; comprueba el comportamiento TLS.
+
+No asumas que las bases comparten servidor, nombres, permisos, joins o
+transacciones. Una clave foranea entre bases requiere verificar motor,
+servidor, nombres, tipos y permisos, y puede impedir borrar datos del
+anfitrion; explica ese efecto y acuerda la estrategia antes de aplicarla.
+No dupliques datos de la empresa sin definir su correspondencia y ciclo de
+vida con el anfitrion. Documenta esquema, version de MySQL/MariaDB compatible,
+permisos, instalacion y migraciones, sin inventar columnas SQL no verificadas.
+
+Define para cada fecha su significado, almacenamiento, zona horaria y
+conversion. OpenDoors usa UTC para algunas vigencias y aperturas, pero esto
+no impone automaticamente la misma regla al modulo nuevo. Si hay auditoria
+de datos personales, acuerda su alcance, acceso, retencion y purga; explica
+como se ejecuta y supervisa la purga, incluidas las copias de seguridad.
+
+7. FRAGMENTOS DEL ANFITRION PARA ENTENDER LA INTEGRACION
+
+Estos fragmentos proceden de la copia revisada y se incluyen como contexto,
+no como sustituto de comprobar la version instalada. OpenDoors es otro
+modulo: no copies sus nombres, rutas web, conexion ni reglas de negocio al
+modulo nuevo sin adaptarlos. El ejemplo de menu completo esta en la
+seccion 4.
+
+A. SESION Y HABILITACION
+
+Una pagina de Configuracion de OpenDoors incluye su archivo comun y exige
+sesion antes de procesar la solicitud:
+
+  require_once __DIR__ . '/comunLocales.php';
+  requerirSesion();
+
+El archivo comun incluye el verificador y la conexion general y contiene,
+entre otras cosas, esta comprobacion:
+
+  require_once __DIR__ . '/../../../util/Seguridad/verificar.php';
+  require_once __DIR__ . '/../../../util/BaseDatos/db.php';
+
+  function empresaConfiguracionLocales(): ?int
+  {
+      $idEmpresa = (int) $_SESSION['empresa_id'];
+      $stmt = getPDO()->prepare(
+          'SELECT m.nombreModulo FROM empresas_modulos em
+           INNER JOIN modulos m ON m.idModulo = em.idModulo
+           WHERE em.idEmpresa = ? AND em.habilitado = 1'
+      );
+      $stmt->execute([$idEmpresa]);
+      return in_array('OpenDoors', $stmt->fetchAll(PDO::FETCH_COLUMN), true)
+          ? $idEmpresa : null;
+  }
+
+La comprobacion usa comparacion estricta del nombre en PHP. La pagina que
+llama a la funcion debe tratar null como acceso no autorizado; exigir sesion
+antes de consultar $_SESSION; y, ademas, validar permisos y propiedad de cada
+recurso. El modulo nuevo debe usar su nombre exacto y no asumir que la
+consulta por si sola valida todas sus operaciones.
+
+B. CONEXION PROPIA
+
+La conexion observada de OpenDoors esta bajo Nucleo/util y utiliza la
+infraestructura compartida del anfitrion:
+
+  require_once __DIR__ . '/../../../../util/BaseDatos/conexion_mysql.php';
+
+  define('DB_NAME_OPENDOORS', getenv('DB_NAME_OPENDOORS'));
+
+  function getOpenDoorsPDO(): PDO
+  {
+      static $pdo = null;
+      return $pdo ??= crearConexionPDO(DB_NAME_OPENDOORS, '+00:00');
+  }
+
+Esto ilustra el patron y la profundidad de esa ruta concreta; no convierte
+la base de OpenDoors en la base del nuevo modulo. Un modulo distinto
+necesita su propio nombre y configuracion, validar la configuracion ausente
+y usar la zona temporal acordada. El anfitrion proporciona la conexion
+compartida solo si la version instalada la conserva y el entorno la soporta.
+
+C. IFRAME Y ENLACES EMBEBIDOS
+
+El panel observado construye la URL del iframe a partir de la pagina
+declarada en el menu y agrega el parametro:
+
+  $paginas[$actual]
+      . (str_contains($paginas[$actual], '?') ? '&' : '?')
+      . 'embed=1'
+
+Una pagina de OpenDoors detecta y propaga ese contexto asi:
+
+  $embed = isset($_GET['embed']);
+  $listaUrl = 'locales.php' . ($embed ? '?embed=1' : '');
+
+La URL del menu se interpreta desde el panel, pero los enlaces de la pagina
+embebida se interpretan desde la propia pagina. Escapa las URL al emitirlas
+en HTML y adapta las rutas al modulo nuevo.
+
+D. CSRF EN UN FORMULARIO
+
+La pagina observada genera un token en la sesion y lo compara en solicitudes
+POST antes de modificar datos:
+
+  $_SESSION['csrf'] ??= bin2hex(random_bytes(32));
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+      $csrf = $_POST['csrf'] ?? '';
+      if (!is_string($csrf) || !hash_equals($_SESSION['csrf'], $csrf)) {
+          http_response_code(403);
+          $error = 'Solicitud no válida. Recarga la página e inténtalo de nuevo.';
+      } else {
+          // La pagina original valida los campos y realiza la operacion.
+      }
+  }
+
+El formulario debe enviar el token y la operacion solo puede continuar
+cuando sea valido. La proteccion CSRF no reemplaza la sesion, la habilitacion,
+los permisos ni la comprobacion de empresa y propiedad.
+
+8. PRUEBAS Y VALIDACION
+
+- Antes de implementar, revisa el codigo existente y reutiliza sus servicios
+  solo cuando esten realmente disponibles y sean apropiados.
+- Comprueba sintaxis PHP, resolucion de rutas, contrato del menu y el
+  comportamiento introducido. Anade pruebas enfocadas en las reglas nuevas.
+- Si no hay anfitrion, usa dobles o pruebas aisladas sin presentarlos como
+  implementacion productiva. No afirmes integracion real sin probarla.
+- Cuando haya un entorno representativo y autorizado, verifica modulo
+  habilitado y deshabilitado, sesion ausente, acceso directo, aislamiento
+  entre empresas, menu principal, Configuracion, iframe, recursos y
+  operaciones pertinentes, incluidos CSRF y errores.
+- Usa bases y datos de prueba aislados. Revisa primero que hacen los scripts
+  de prueba, especialmente si crean, vacian o eliminan datos. No hagas
+  despliegues, carga, migraciones reales ni acciones destructivas sin
+  autorizacion.
+- Si la prueba no se pudo ejecutar, indica exactamente que quedo pendiente;
+  un analisis estatico no sustituye una prueba contra MySQL ni una prueba
+  de integracion en el anfitrion.
+
+9. DOCUMENTACION Y CIERRE
+
+Incluye dentro del modulo instrucciones precisas para copiar la carpeta,
+registrar el nombre exacto en modulos, asignar y habilitar el modulo para la
+empresa, configurar el entorno y preparar la base si aplica. Documenta
+dependencias, permisos, pasos externos, migraciones, pruebas pendientes y
+riesgos. No inventes comandos o columnas que no hayas verificado.
+
+Al finalizar cada etapa, resume que implementaste, que probaste, que falta
+comprobar en el anfitrion y que pasos adicionales necesita el usuario. No
+presentes una integracion parcial como si fuera automatica.

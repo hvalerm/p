@@ -1,0 +1,27 @@
+* { box-sizing: border-box; }
+body { margin: 0; background: #f2f5f7; color: #1b2a35; font: 16px/1.5 "Segoe UI", Arial, sans-serif; }
+.panel { max-width: 760px; margin: 0 auto; padding: 28px; background: #fff; min-height: 100vh; }
+h1 { margin: 0 0 4px; font-size: 1.8rem; }
+h2 { margin: 28px 0 8px; font-size: 1.25rem; }
+.seccion { color: #537183; font-size: .9rem; }
+.descripcion, .nota, .leyenda { color: #526977; }
+.calendario { max-width: 420px; margin: 20px 0; }
+.controles { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.controles h3 { margin: 0; text-transform: capitalize; }
+button { font: inherit; cursor: pointer; }
+.controles button, #limpiar { border: 1px solid #b7c8d1; background: #fff; border-radius: 6px; padding: 6px 12px; color: #1b2a35; }
+button:focus-visible { outline: 3px solid #1485b8; outline-offset: 2px; }
+button:disabled { cursor: not-allowed; opacity: .4; }
+.semana, .dias { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; text-align: center; }
+.semana { margin: 16px 0 8px; color: #526977; font-size: .85rem; }
+.dias button { min-height: 42px; border: 1px solid transparent; border-radius: 6px; background: #f4f7f8; color: #1b2a35; }
+.dias button:not(:disabled):hover { border-color: #3a8fb7; }
+.dias button.reservado { font-weight: 800; }
+.dias button.rango { background: #d7eef8; }
+.dias button.extremo { background: #1e6d91; color: #fff; }
+.leyenda { font-size: .85rem; }
+.seleccion { min-height: 3em; }
+.aviso { padding: 10px 12px; border-radius: 6px; }
+.error { background: #fff0ef; color: #8d2923; }
+.nota { font-size: .9rem; }
+@media (max-width: 480px) { .panel { padding: 18px; } .dias button { min-height: 38px; } }

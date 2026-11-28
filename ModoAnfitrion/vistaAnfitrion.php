@@ -61,6 +61,9 @@ function paginasEmpresa(array $items, int $idEmpresa): array
 foreach ($modulos as $asignaciones) {
     $modulo = $asignaciones[0];
     $nombreModulo = $modulo['nombreModulo'];
+    $iconoEmpresa = $nombreModulo === 'GESTALO'
+        ? 'M4 3h16v18h-6v-4h-4v4H4zm3 3v2h2V6zm4 0v2h2V6zm4 0v2h2V6zM7 10v2h2v-2zm4 0v2h2v-2zm4 0v2h2v-2zM7 14v2h2v-2zm8 0v2h2v-2z'
+        : $iconoModulo;
     $claveModulo = 'modulo-' . (int) $modulo['idModulo'];
     $archivo = __DIR__ . '/../Modulos/' . $nombreModulo . '/menuLateral.php';
     if ($nombreModulo === '.' || $nombreModulo === '..' || preg_match('~[\\\\/\x00-\x1f\x7f]~', $nombreModulo)
@@ -71,7 +74,7 @@ foreach ($modulos as $asignaciones) {
         $grupos = [];
         if ($multiempresa || !$modulo['vigente']) {
             foreach ($asignaciones as $asignacion) {
-                $grupos[] = [$asignacion['nombreEmpresa'], [], null, 'empresa-' . (int) $asignacion['idEmpresa'], $iconoModulo,
+                $grupos[] = [$asignacion['nombreEmpresa'], [], null, 'empresa-' . (int) $asignacion['idEmpresa'], $iconoEmpresa,
                     $asignacion['vigente'] ? 'Módulo no disponible.' : 'La licencia del módulo expiró.'];
             }
         }
@@ -93,7 +96,7 @@ foreach ($modulos as $asignaciones) {
             $idEmpresa = (int) $asignacion['idEmpresa'];
             $claveEmpresa = 'empresa-' . $idEmpresa;
             if (!$asignacion['vigente']) {
-                $grupo = [$asignacion['nombreEmpresa'], [], null, $claveEmpresa, $iconoModulo, 'La licencia del módulo expiró.'];
+                $grupo = [$asignacion['nombreEmpresa'], [], null, $claveEmpresa, $iconoEmpresa, 'La licencia del módulo expiró.'];
                 $grupos[] = $grupo;
                 $gruposConfiguracion[] = $grupo;
                 continue;
@@ -104,8 +107,8 @@ foreach ($modulos as $asignaciones) {
                 throw new UnexpectedValueException('Definición de menú incompleta.');
             }
             $definicion ??= $actualDefinicion;
-            $grupos[] = [$asignacion['nombreEmpresa'], paginasEmpresa($actualDefinicion['principal'][2], $idEmpresa), null, $claveEmpresa, $iconoModulo];
-            $gruposConfiguracion[] = [$asignacion['nombreEmpresa'], paginasEmpresa($actualDefinicion['configuracion'][1], $idEmpresa), null, $claveEmpresa, $iconoModulo];
+            $grupos[] = [$asignacion['nombreEmpresa'], paginasEmpresa($actualDefinicion['principal'][2], $idEmpresa), null, $claveEmpresa, $iconoEmpresa];
+            $gruposConfiguracion[] = [$asignacion['nombreEmpresa'], paginasEmpresa($actualDefinicion['configuracion'][1], $idEmpresa), null, $claveEmpresa, $iconoEmpresa];
         }
         $definicion ??= [
             'principal' => [$nombreModulo, $iconoModulo, [], null, $claveModulo],

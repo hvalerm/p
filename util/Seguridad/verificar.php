@@ -1,7 +1,13 @@
 <?php
 require_once __DIR__ . '/../BaseDatos/db.php';
 
-if (PHP_SAPI !== 'cli' && (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off')) {
+function esHttps(): bool
+{
+    return (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off')
+        || (getenv('RENDER') === 'true' && ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+}
+
+if (PHP_SAPI !== 'cli' && !esHttps()) {
     http_response_code(403);
     exit('Esta vista requiere una conexión HTTPS.');
 }

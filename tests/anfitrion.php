@@ -1,6 +1,28 @@
 <?php
 require_once __DIR__ . '/../util/Seguridad/verificar.php';
 
+$renderOriginal = getenv('RENDER');
+$servidorOriginal = $_SERVER;
+try {
+    foreach ([
+        [false, ['HTTPS' => 'on'], true],
+        [false, ['HTTPS' => 'off'], false],
+        [false, ['HTTP_X_FORWARDED_PROTO' => 'https'], false],
+        ['true', ['HTTP_X_FORWARDED_PROTO' => 'https'], true],
+        ['true', ['HTTP_X_FORWARDED_PROTO' => 'http'], false],
+        ['true', [], false],
+    ] as [$render, $servidor, $esperado]) {
+        putenv($render === false ? 'RENDER' : 'RENDER=' . $render);
+        $_SERVER = $servidor;
+        if (esHttps() !== $esperado) {
+            throw new RuntimeException('Detección HTTPS incorrecta.');
+        }
+    }
+} finally {
+    putenv($renderOriginal === false ? 'RENDER' : 'RENDER=' . $renderOriginal);
+    $_SERVER = $servidorOriginal;
+}
+
 $pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 $pdo->exec('CREATE TABLE cuentas (idCuenta INTEGER, habilitado INTEGER)');
 $pdo->exec('CREATE TABLE empresas (idEmpresa INTEGER, nombreEmpresa TEXT, licenciaExpira TEXT, habilitado INTEGER)');
